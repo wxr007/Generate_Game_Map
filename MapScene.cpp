@@ -4,8 +4,13 @@
 
 USING_NS_CC;
 
+const int CircumferentialAngle = 360;			//圆周角度
 const float Cell_Len = 16;						//格子大小
 const Vec2 Cell_Rect = Vec2(Cell_Len, Cell_Len);
+
+const int Min_Radial_Len = 100;
+const int Max_Radial_Len = 300;
+
 const int Map_Width = 24*4;						//地图高
 const int Map_Length = 32*4;					//地图长
 
@@ -18,14 +23,15 @@ int Random(int min, int max){
 	return min + (rand() % std::max(max - min,0));
 }
 
-bool pointInPolygon(float x, float y, std::vector<Vec2>& poly_points) {
+//判断点是否在多边形内
+bool pointInPolygon(float check_x, float check_y, std::vector<Vec2>& poly_points) {
 	int i, j = poly_points.size() - 1;
 	bool oddNodes = false;
 	for (i = 0; i < poly_points.size(); i++) {
 		loop_count++;
-		if ((poly_points[i].y < y && poly_points[j].y > y || poly_points[j].y < y && poly_points[i].y > y)){		//水平线是否能相交
-			if (poly_points[i].x <= x || poly_points[j].x <= x){													//只要计算在x左边的一半
-				if (poly_points[i].x + (y - poly_points[i].y) / (poly_points[j].y - poly_points[i].y) * (poly_points[j].x - poly_points[i].x) < x){ //水平相交点的坐标在x的左边
+		if ((poly_points[i].y < check_y && poly_points[j].y > check_y || poly_points[j].y < check_y && poly_points[i].y > check_y)){		//水平线是否能相交
+			if (poly_points[i].x <= check_x || poly_points[j].x <= check_x){													//只要计算在x左边的一半
+				if (poly_points[i].x + (check_y - poly_points[i].y) / (poly_points[j].y - poly_points[i].y) * (poly_points[j].x - poly_points[i].x) < check_x){ //水平相交点的坐标在x的左边
 					oddNodes = !oddNodes;
 				}
 			}
@@ -33,6 +39,22 @@ bool pointInPolygon(float x, float y, std::vector<Vec2>& poly_points) {
 		j = i;
 	}
 	return oddNodes;
+}
+
+//计算y轴平行线和多边形的交点
+void calculateIntersectionsWithPolygon(std::vector<Vec2>& poly_points, Intersections& points){
+	int i, j = poly_points.size() - 1;
+	for (i = 0; i < poly_points.size(); i++) {
+		loop_count++;
+		if ((poly_points[i].y < points.line_y && poly_points[j].y >= points.line_y || poly_points[j].y < points.line_y && poly_points[i].y >= points.line_y)){		//水平线是否能相交
+			float intersection_x = (points.line_y - poly_points[i].y) / (poly_points[j].y - poly_points[i].y) * (poly_points[j].x - poly_points[i].x) + poly_points[i].x;
+			points.list_x.push_back(intersection_x);
+		}
+		j = i;
+	}
+	if (points.list_x.size() > 0){
+		points.list_x.sort();
+	}
 }
 
 Scene* MapScene::createScene()
@@ -64,16 +86,13 @@ bool MapScene::init()
 	Vec2 origin = Director::getInstance()->getVisibleOrigin();
 	CCLOG("origin =(%f,%f)", origin.x, origin.y);
 
-	bgColor = LayerColor::create(Color4B::BLACK, 1024, 768);
+	bgColor = LayerColor::create(Color4B::BLACK);
 //	bgColor->setAnchorPoint(Vec2::ZERO);
-	bgColor->setPosition(Vec2::ZERO);
+	bgColor->setPosition(Vec2(visibleSize.width/2, visibleSize.height/2));
 	this->addChild(bgColor);
 
 	my_drawNode = DrawNode::create();
 	bgColor->addChild(my_drawNode);
-
-//	my_drawNode->setPosition(origin);
-//	my_drawNode->drawDot(Vec2::ZERO, 4, Color4F::RED);
 
 	// 1 创建一个事件监听器
 	auto TouchListener = EventListenerTouchAllAtOnce::create();
@@ -89,7 +108,6 @@ bool MapScene::init()
 
 	grow_weight_x = 0;
 	grow_weight_y = 0;
-
 
 //	DrawBasePolyByPoint();
 	DrawBasePloyByRadian();
@@ -205,24 +223,21 @@ void MapScene::DrawBasePloyByRadian(){
 	std::vector<Vec2> poly_points;
 	poly_points.reserve(count);
 
-	float avg_angle = 360 / count;		//平均角度
+	float avg_angle = CircumferentialAngle / count;		//平均角度
 	int rand_angle = int(avg_angle);	//平均角度
 	Vec2 unit = Vec2::UNIT_X;
 
 	Vec2 min, max;
 	for (int i = 0; i < count; i++){
 		float ang = avg_angle*i + Random(0, rand_angle);
-		Vec2 vec = unit.rotateByAngle(Vec2::ZERO, CC_DEGREES_TO_RADIANS(ang)) * Random(100, 300);
+		Vec2 vec = unit.rotateByAngle(Vec2::ZERO, CC_DEGREES_TO_RADIANS(ang)) * Random(Min_Radial_Len, Max_Radial_Len);
 		min.x = std::min(min.x, vec.x);
 		min.y = std::min(min.y, vec.y);
 		max.x = std::max(max.x, vec.x);
 		max.y = std::max(max.y, vec.y);
-		vec += Vec2(350, 350);
 		poly_points.push_back(vec);
 		//CCLOG("point(%f,%f)", vec.x, vec.y);
 	}
-	min += Vec2(350, 350);
-	max += Vec2(350, 350);
 	//my_drawNode->drawPolygon(poly_points.data(), count, Color4F::GREEN, 1, Color4F::MAGENTA);
 
 	//添加瓦片
@@ -233,14 +248,49 @@ void MapScene::DrawBasePloyByRadian(){
 
 	//CCLOG("(%d,%d) (%d,%d) %d x %d", min_x, min_y, max_x, max_y ,(max_x-min_x),(max_y - min_y));
 
-	for (int j = min_y; j < max_y; ++j){
-		for (int i = min_x; i < max_x; ++i){
-			if (pointInPolygon(i*Cell_Len, j*Cell_Len, poly_points)){
-				DrawCell(i, j, Color4F::GRAY);
+// 	for (int j = min_y; j < max_y; ++j){
+// 		for (int i = min_x; i < max_x; ++i){
+// 			if (pointInPolygon(i*Cell_Len, j*Cell_Len, poly_points)){
+// 				DrawCell(i, j, Color4F::GRAY);
+// 			}
+// 		}
+// 	}
+
+	//获取交点队列
+	std::vector<Intersections> intersection_list;
+	intersection_list.reserve(max_y-min_y);
+	for (int j = min_y; j < max_y; ++j){	//计算平行线的相交线
+		my_drawNode->drawLine(Vec2(min.x, j*Cell_Len), Vec2(max.x, j*Cell_Len), Color4F::BLUE);
+		Intersections inter;
+		inter.line_y = j*Cell_Len;
+		calculateIntersectionsWithPolygon(poly_points, inter);
+		if (inter.list_x.size() > 0){
+			intersection_list.push_back(inter);
+		}
+	}
+	//以交点填充瓦片
+	int cell_count = 0;
+	for (std::vector<Intersections>::iterator it = intersection_list.begin(); it != intersection_list.end(); it++){
+		int row_y = int(it->line_y) / Cell_Len;
+		//CCLOG("row_y = %d list_x = %d", row_y, it->list_x.size());
+		while (it->list_x.size()){
+			int col_x1 = int(it->list_x.front()) / Cell_Len;
+			it->list_x.pop_front();
+			if (it->list_x.size() == 0){
+				break;
+			}
+			int col_x2 = int(it->list_x.front()) / Cell_Len;
+			it->list_x.pop_front();
+//			CCLOG("row_y = %d col_x1 = %d, col_x2 = %d", row_y, col_x1, col_x2);
+			for (int i = col_x1; i < col_x2; i++){
+				DrawCell(i, row_y, Color4F::GRAY);
+				loop_count++;
+				cell_count++;
 			}
 		}
 	}
-	CCLOG("loop count = %d", loop_count);
+	CCLOG("loop_count = %d", loop_count);
+	CCLOG("cell_count = %d", cell_count);
 }
 
 void MapScene::DrawTest(){

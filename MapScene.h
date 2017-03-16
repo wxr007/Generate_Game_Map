@@ -42,6 +42,12 @@ struct Vec2_Rad
 	cocos2d::Vec2 vec;
 };
 
+//交点
+struct Intersections{	
+	float line_y;			//y坐标
+	std::list<float>	list_x;		//和所有边交点的x坐标 从左到右排列
+};
+
 class MapScene : public cocos2d::Layer
 {
 public:
