@@ -5,48 +5,7 @@
 #define __MAP_SCENE_H__
 
 #include "cocos2d.h"
-
-//记录格子位置类型
-struct CellPos
-{
-	CellPos(int _x, int _y){
-		x = _x;
-		y = _y;
-	}
-	int x;
-	int y;
-};
-
-struct CellPosFill:CellPos
-{
-	enum {
-		UnFilled = 0,	//未填充
-		PreFill = 1,	//准备填充
-		Filled = 2,		//已填充
-	};
-
-	CellPosFill(int _x, int _y)
-	:CellPos(_x,_y){
-		filled = UnFilled;
-	}
-	byte filled;//记录是否被填充
-};
-
-struct Vec2_Rad
-{
-	Vec2_Rad(float x, float y){
-		vec = cocos2d::Vec2(x, y);
-		rad = 0;
-	}
-	float rad;		//弧度
-	cocos2d::Vec2 vec;
-};
-
-//交点
-struct Intersections{	
-	float line_y;			//y坐标
-	std::list<float>	list_x;		//和所有边交点的x坐标 从左到右排列
-};
+#include "MapPlate.h"
 
 class MapScene : public cocos2d::Layer
 {
@@ -58,13 +17,12 @@ public:
 	// implement the "static create()" method manually
 	CREATE_FUNC(MapScene);
 
-	virtual void onTouchesBegan(const std::vector<cocos2d::Touch*>& touches, cocos2d::Event *event);
-	virtual void onTouchesMoved(const std::vector<cocos2d::Touch*>& touches, cocos2d::Event *event);
-protected:
-	void DrawBasePolyByPoint();
-	void DrawBasePloyByRadian();
-	void DrawTest();
+	void onTouchesBegan(const std::vector<cocos2d::Touch*>& touches, cocos2d::Event *event);
+	void onTouchesMoved(const std::vector<cocos2d::Touch*>& touches, cocos2d::Event *event);
 
+	void onKeyPressed(cocos2d::EventKeyboard::KeyCode keycode, cocos2d::Event *event);
+	void onKeyReleased(cocos2d::EventKeyboard::KeyCode keycode, cocos2d::Event *event);
+protected:
 	void DrawMap(int width, int length);
 	void initCellGrid(); //初始化网格
 	void RecordCellsAround(int x, int y);
@@ -72,7 +30,10 @@ protected:
 	void FillCell(CellPos& pos, const cocos2d::Color4F &color);
 	void DrawCell(int x, int y, const cocos2d::Color4F &color);
 	void PushCell(int x, int y);
-
+protected:
+	void InitMap(int width, int length);
+	void FillPlateCell(MapPlate& plate);
+	void DrawMap();
 private:
 	cocos2d::TMXTiledMap* map;
 	cocos2d::Sprite* bgSprite;
@@ -87,7 +48,7 @@ private:
 	int grow_weight_y; //y方向的生长权重 %
 	int grow_loop;	   //年轮生长圈数
 
-	typedef std::vector<CellPosFill> CellArray;
+	typedef std::vector<CellInfo> CellArray;
 	typedef std::vector<CellArray> CellGrid;
 	CellGrid cell_grid;	//地图网格
 	typedef std::queue<CellPos> CellList;
