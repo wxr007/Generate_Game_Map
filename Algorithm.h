@@ -29,7 +29,11 @@ struct CellInfo :CellPos
 		PreFill = 1,	//准备填充
 		Filled = 2,		//已填充
 	};
-
+	CellInfo()
+		:CellPos(0, 0){
+		filled = UnFilled;
+		bound = false;
+	}
 	CellInfo(int _x, int _y)
 		:CellPos(_x, _y){
 		filled = UnFilled;
@@ -37,6 +41,7 @@ struct CellInfo :CellPos
 	}
 	byte filled;//记录是否被填充
 	bool bound;//是否边界
+	int32_t value;
 };
 
 //交点

@@ -24,7 +24,6 @@ public:
 	void onKeyReleased(cocos2d::EventKeyboard::KeyCode keycode, cocos2d::Event *event);
 protected:
 	void DrawMap(int width, int length);
-	void initCellGrid(); //初始化网格
 	void RecordCellsAround(int x, int y);
 
 	void FillCell(CellPos& pos, const cocos2d::Color4F &color);
@@ -32,6 +31,9 @@ protected:
 	void PushCell(int x, int y);
 protected:
 	void InitMap(int width, int length);
+	int AddNextPlate(int x, int y, int angle);
+	void InitCellGrid(); //初始化网格
+	void InitPlate();
 	void FillPlateCell(MapPlate& plate);
 	void DrawMap();
 private:
@@ -48,13 +50,11 @@ private:
 	int grow_weight_y; //y方向的生长权重 %
 	int grow_loop;	   //年轮生长圈数
 
-	typedef std::vector<CellInfo> CellArray;
-	typedef std::vector<CellArray> CellGrid;
+	typedef std::deque<CellInfo> CellArray;
+	typedef std::deque<CellArray> CellGrid;
 	CellGrid cell_grid;	//地图网格
 	typedef std::queue<CellPos> CellList;
 	CellList pre_cell_list;	//
 	CellList after_cell_list;//
-
-
 };
 #endif // __MAP_SCENE_H__

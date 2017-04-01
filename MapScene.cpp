@@ -4,9 +4,10 @@
 
 USING_NS_CC;
 
-
 const Vec2 Cell_Rect = Vec2(Cell_Len, Cell_Len);
-
+//mini	8400*2400
+//mid	12600*3600
+//large 16800*4800
 const int Map_Width = 48*4;						//地图高
 const int Map_Length = 64*4;					//地图长
 
@@ -94,7 +95,8 @@ void MapScene::onKeyReleased(EventKeyboard::KeyCode keycode, cocos2d::Event *eve
 {
 	if (keycode == EventKeyboard::KeyCode::KEY_SPACE){
 		my_drawNode->clear();
-		InitMap(Map_Width, Map_Length);
+		InitPlate();
+		DrawMap();
 	}
 }
 
@@ -143,7 +145,7 @@ void MapScene::DrawMap(int width,int length)
 
 		grow_loop = Random(Grow_Min_Loop, Grow_Max_Loop);
 		CCLOG("grow %d/%d (%d)", grow_weight_x, grow_weight_y, grow_loop);
-		initCellGrid();
+		InitCellGrid();
 
 		CellPos startpos = CellPos(map_length / 2, map_width / 2);
 		PushCell(startpos.x, startpos.y);
@@ -168,18 +170,18 @@ void MapScene::DrawMap(int width,int length)
 	}
 }
 
-void MapScene::initCellGrid(){
+void MapScene::InitCellGrid(){
 	if (map_width > 0 && map_length > 0){
-		cell_grid.reserve(map_length);
+		cell_grid.resize(map_length);
 		for (int i = 0; i < map_length; i++){
-			CellArray cell_array;
-			cell_grid.push_back(cell_array);
-			cell_grid[i].reserve(map_width);
+			CellArray cell_array(map_width);
+			cell_grid[i] = cell_array;
 			for (int j = 0; j < map_width; j++){
-				cell_grid[i].push_back(CellInfo(i, j));
+				cell_grid[i][j] = CellInfo(i, j);
 			}
 		}
 	}
+	CCLOG("map size %d,%d", cell_grid.size(), cell_grid[0].size());
 }
 
 void MapScene::FillCell(CellPos& pos, const Color4F &color){
@@ -243,16 +245,36 @@ void MapScene::InitMap(int width, int length)
 	if (width > 0 && length > 0){
 		map_width = width;
 		map_length = length;
-		initCellGrid();
-
-		MapPlate plate(map_width / 2, map_length/2);
-		FillPlateCell(plate);
-
-		MapPlate plate2(map_width / 2 + 20, map_length / 2 + 20);
-		FillPlateCell(plate2);
-
+		InitCellGrid();
+		InitPlate();
 		DrawMap();
 	}
+}
+
+void MapScene::InitPlate(){
+	int x = map_width / 2;
+	int y = map_length / 2;
+	MapPlate plate(x, y);
+	FillPlateCell(plate);
+	CCLOG("orgin Plate %d,%d ", x, y);
+	int next_angle = 0;
+	next_angle = AddNextPlate(x, y, next_angle);
+	next_angle = AddNextPlate(x, y, next_angle);
+}
+
+int MapScene::AddNextPlate(int org_x, int org_y, int pre_angle){
+	Vec2 unit = Vec2::UNIT_X;
+	int angle = (Random(0, CircumferentialAngle - pre_angle) + pre_angle) % CircumferentialAngle;
+	int distance = Random(Cell_Group, 4 * Cell_Group + 1);
+	Vec2 next = unit.rotateByAngle(Vec2::ZERO, CC_DEGREES_TO_RADIANS(angle)) * distance;
+
+	int next_x = int(next.x) + org_x;
+	int next_y = int(next.y) + org_y;
+
+	MapPlate plate(next_x, next_y);
+	FillPlateCell(plate);
+	CCLOG("next Plate %d,%d %d %d", next_x, next_y, angle, distance);
+	return angle;
 }
 
 void MapScene::FillPlateCell(MapPlate& plate)
@@ -261,6 +283,8 @@ void MapScene::FillPlateCell(MapPlate& plate)
 		if (it->x >= 0 && it->x < map_length && it->y >= 0 && it->y < map_width){
 			if (cell_grid[it->x][it->y].filled != CellInfo::Filled){
 				cell_grid[it->x][it->y].filled = CellInfo::Filled;
+				cell_grid[it->x][it->y].bound = false;
+			}else if (cell_grid[it->x][it->y].bound){
 				cell_grid[it->x][it->y].bound = false;
 			}
 		}
@@ -285,7 +309,6 @@ void MapScene::DrawMap()
 				}else{
 					DrawCell(i, j, Color4F::GRAY);
 				}
-				
 			}
 		}
 	}

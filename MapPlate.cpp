@@ -7,8 +7,8 @@ USING_NS_CC;
 const int MinVertexsCount = 7;		//最小顶点数
 const int MaxVertexsCount = 17;		//最多顶点数
 
-const int Min_Radial_Len = 5 * Cell_Len;		//最短放射长度
-const int Max_Radial_Len = 20 * Cell_Len;		//最长放射长度
+const int Min_Radial_Len = Cell_Group * Cell_Len;		//最短放射长度
+const int Max_Radial_Len = 4 * Cell_Group * Cell_Len;		//最长放射长度
 
 
 MapPlate::MapPlate(int x, int y)
@@ -16,7 +16,7 @@ MapPlate::MapPlate(int x, int y)
 	DrawBasePloy();
 	GetIntersections();
 	FillCells();
-	CCLOG("center :[%d,%d]", CenterPos.x, CenterPos.y);
+//	CCLOG("center :[%d,%d]", CenterPos.x, CenterPos.y);
 }
 MapPlate::~MapPlate(){
 	poly_points.clear();
@@ -62,7 +62,7 @@ void MapPlate::GetIntersections(){
 			intersection_list.push_back(inter);
 		}
 	}
-	CCLOG("area :[%d,%d],[%d,%d]", MinPos.x, MinPos.y, MaxPos.x, MaxPos.y);
+//	CCLOG("area :[%d,%d],[%d,%d]", MinPos.x, MinPos.y, MaxPos.x, MaxPos.y);
 }
 
 void MapPlate::FillCells(){
@@ -87,5 +87,5 @@ void MapPlate::FillCells(){
 			}
 		}
 	}
-	CCLOG("cell_count = %d", cell_count);
+//	CCLOG("cell_count = %d", cell_count);
 }

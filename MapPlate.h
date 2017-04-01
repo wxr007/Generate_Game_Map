@@ -9,7 +9,9 @@
 #include "cocos2d.h"
 #include "Algorithm.h"
 
-const float Cell_Len = 16;			//格子大小
+const int Cell_Len = 16;			//格子大小
+const int Cell_Group = 5;
+
 
 class MapPlate
 {
