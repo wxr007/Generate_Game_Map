@@ -1,11 +1,8 @@
-#pragma once
-#pragma execution_character_set("utf-8")
-
 #ifndef __MAP_SCENE_H__
 #define __MAP_SCENE_H__
 
 #include "cocos2d.h"
-#include "MapPlate.h"
+#include "MapPlateGroup.h"
 
 class MapScene : public cocos2d::Layer
 {
@@ -31,15 +28,15 @@ protected:
 	void PushCell(int x, int y);
 protected:
 	void InitMap(int width, int length);
-	int AddNextPlate(int x, int y, int angle);
 	void InitCellGrid(); //初始化网格
 	void InitPlate();
-	void FillPlateCell(MapPlate& plate);
 	void DrawMap();
+public:
+	cocos2d::DrawNode* my_drawNode;
 private:
 	cocos2d::TMXTiledMap* map;
 	cocos2d::Sprite* bgSprite;
-	cocos2d::DrawNode* my_drawNode;
+	
 	cocos2d::LayerColor* bgColor;
 
 
@@ -50,11 +47,8 @@ private:
 	int grow_weight_y; //y方向的生长权重 %
 	int grow_loop;	   //年轮生长圈数
 
-	typedef std::deque<CellInfo> CellArray;
-	typedef std::deque<CellArray> CellGrid;
 	CellGrid cell_grid;	//地图网格
-	typedef std::queue<CellPos> CellList;
-	CellList pre_cell_list;	//
-	CellList after_cell_list;//
+	CellQueue pre_cell_list;	//
+	CellQueue after_cell_list;//
 };
 #endif // __MAP_SCENE_H__

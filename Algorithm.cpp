@@ -28,7 +28,7 @@ bool pointInPolygon(float check_x, float check_y, std::vector<Vec2>& poly_points
 }
 
 //计算y轴平行线和多边形的交点
-void calculateIntersectionsWithPolygon(std::vector<Vec2>& poly_points, Intersections& points){
+void polygonIntersections(std::vector<Vec2>& poly_points, Intersections& points){
 	int i, j = poly_points.size() - 1;
 	for (i = 0; i < poly_points.size(); i++) {
 		if ((poly_points[i].y < points.line_y && poly_points[j].y >= points.line_y || poly_points[j].y < points.line_y && poly_points[i].y >= points.line_y)){		//水平线是否能相交

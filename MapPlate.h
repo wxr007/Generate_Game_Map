@@ -1,6 +1,3 @@
-#pragma once
-#pragma execution_character_set("utf-8")
-
 #ifndef __MAP_PLATE_H__
 #define __MAP_PLATE_H__
 
@@ -12,7 +9,6 @@
 const int Cell_Len = 16;			//格子大小
 const int Cell_Group = 5;
 
-
 class MapPlate
 {
 public:
@@ -23,11 +19,11 @@ protected:
 	void GetIntersections();	//计算形状x轴平行线交点
 	void FillCells();			//填充格子
 private:
-	CellPos MinPos, MaxPos,CenterPos;
+	CellPos MinPos, MaxPos;
 	std::vector<cocos2d::Vec2> poly_points;
 	std::vector<Intersections> intersection_list; //交点队列
 public:
-	typedef std::list<CellPos> CellList;
+	CellPos CenterPos;
 	CellList PlateCells;			//板块中的格子
 	CellList BoundCells;			//边缘上的格子
 };

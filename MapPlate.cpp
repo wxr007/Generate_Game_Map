@@ -57,7 +57,7 @@ void MapPlate::GetIntersections(){
 	for (int j = MinPos.y; j <= MaxPos.y; ++j){			//计算平行线的相交线
 		Intersections inter;
 		inter.line_y = j*Cell_Len;
-		calculateIntersectionsWithPolygon(poly_points, inter);
+		polygonIntersections(poly_points, inter);
 		if (inter.list_x.size() > 0){
 			intersection_list.push_back(inter);
 		}

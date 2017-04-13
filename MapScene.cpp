@@ -46,10 +46,13 @@ bool MapScene::init()
 	bgColor = LayerColor::create(Color4B::BLACK);
 //	bgColor->setAnchorPoint(Vec2::ZERO);
 	bgColor->setPosition(Vec2::ZERO);
+	bgColor->setPosition(Vec2((visibleSize.width - Map_Width * Cell_Len) / 2, (visibleSize.height - Map_Length * Cell_Len) / 2));
 	this->addChild(bgColor);
 
 	my_drawNode = DrawNode::create();
 	bgColor->addChild(my_drawNode);
+
+	
 
 	// 1 创建一个事件监听器
 	auto TouchListener = EventListenerTouchAllAtOnce::create();
@@ -125,7 +128,7 @@ void MapScene::onTouchesMoved(const std::vector<cocos2d::Touch*>& touches, cocos
 
 	Vec2 origin = Director::getInstance()->getVisibleOrigin();
 
-//	CCLOG("org %f,%f", origin.x,origin.y);
+//	CCLOG("pos %f %f", pos.x, pos.y);
 }
 
 void MapScene::DrawMap(int width,int length)
@@ -254,49 +257,9 @@ void MapScene::InitMap(int width, int length)
 void MapScene::InitPlate(){
 	int x = map_width / 2;
 	int y = map_length / 2;
-	MapPlate plate(x, y);
-	FillPlateCell(plate);
-	CCLOG("orgin Plate %d,%d ", x, y);
-	int next_angle = 0;
-	next_angle = AddNextPlate(x, y, next_angle);
-	next_angle = AddNextPlate(x, y, next_angle);
-}
 
-int MapScene::AddNextPlate(int org_x, int org_y, int pre_angle){
-	Vec2 unit = Vec2::UNIT_X;
-	int angle = (Random(0, CircumferentialAngle - pre_angle) + pre_angle) % CircumferentialAngle;
-	int distance = Random(Cell_Group, 4 * Cell_Group + 1);
-	Vec2 next = unit.rotateByAngle(Vec2::ZERO, CC_DEGREES_TO_RADIANS(angle)) * distance;
-
-	int next_x = int(next.x) + org_x;
-	int next_y = int(next.y) + org_y;
-
-	MapPlate plate(next_x, next_y);
-	FillPlateCell(plate);
-	CCLOG("next Plate %d,%d %d %d", next_x, next_y, angle, distance);
-	return angle;
-}
-
-void MapScene::FillPlateCell(MapPlate& plate)
-{
-	for (MapPlate::CellList::iterator it = plate.PlateCells.begin(); it != plate.PlateCells.end(); it++){
-		if (it->x >= 0 && it->x < map_length && it->y >= 0 && it->y < map_width){
-			if (cell_grid[it->x][it->y].filled != CellInfo::Filled){
-				cell_grid[it->x][it->y].filled = CellInfo::Filled;
-				cell_grid[it->x][it->y].bound = false;
-			}else if (cell_grid[it->x][it->y].bound){
-				cell_grid[it->x][it->y].bound = false;
-			}
-		}
-	}
-	for (MapPlate::CellList::iterator it = plate.BoundCells.begin(); it != plate.BoundCells.end(); it++){
-		if (it->x >= 0 && it->x < map_length && it->y >= 0 && it->y < map_width){
-			if (cell_grid[it->x][it->y].filled != CellInfo::Filled){
-				cell_grid[it->x][it->y].filled = CellInfo::Filled;
-				cell_grid[it->x][it->y].bound = true;
-			}
-		}
-	}
+	MapPlateGroup plate_group(x, y, my_drawNode);
+	plate_group.FilledCellGrid(cell_grid);
 }
 
 void MapScene::DrawMap()
@@ -307,7 +270,18 @@ void MapScene::DrawMap()
 				if (cell_grid[i][j].bound){
 					DrawCell(i, j, Color4F::WHITE);
 				}else{
-					DrawCell(i, j, Color4F::GRAY);
+					switch (cell_grid[i][j].value)
+					{
+					case Plate_Center:
+						DrawCell(i, j, Color4F::GREEN);
+						break;
+					case Group_Center:
+						DrawCell(i, j, Color4F::RED);
+						break;
+					default:
+						DrawCell(i, j, Color4F::GRAY);
+						break;
+					}
 				}
 			}
 		}
